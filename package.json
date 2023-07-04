@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "start": "mocha test.spec.js",
+    "test": "mocha --timeout 100000"
+  },
+  "dependencies": {
+    "mocha": "^10.2.0",
+    "selenium-webdriver": "^4.10.0"
+  }
+}
