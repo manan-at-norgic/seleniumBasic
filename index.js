@@ -1,6 +1,13 @@
-const { assert } = require("chai");
-const { Builder, By, Browser } = require("selenium-webdriver");
+const { assert, expect } = require("chai");
+const { Builder, By, Browser, Actions, until } = require("selenium-webdriver");
 const { suite } = require("selenium-webdriver/testing");
+const chai = require("chai");
+const http = require("http");
+const chaiAsPromised = require("chai-as-promised");
+const { default: axios } = require("axios");
+
+// chai.use(chaiAsPromised);
+// const expect = chai.expect;
 
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
@@ -42,7 +49,7 @@ suite(
       describe("2. Basic auth with alert", async () => {
         it("", async () => {
           await driver.navigate().back();
-          await delay(2000);
+          // await delay(2000);
           //here to handle the basic auth popup we can send parameters in url like
           // http://username:password@domain.com
           await driver
@@ -53,7 +60,7 @@ suite(
       describe("3. broken images", async () => {
         it("", async () => {
           // Navigate to the webpage
-          await delay(2000);
+          // await delay(2000);
           await driver.navigate().back();
           await delay(3000);
           await driver
@@ -91,7 +98,7 @@ suite(
 
       describe("4. challenging DOM", async () => {
         it("navigation/load page", async () => {
-          await delay(2000);
+          // await delay(2000);
           await driver.navigate().back();
         });
         it("check title of the home page", async () => {
@@ -102,7 +109,7 @@ suite(
           });
         });
         it("verify Header of Challenging DOM", async () => {
-          await delay(2000);
+          // await delay(2000);
           await driver
             .findElement(By.xpath("//ul/li/a[@href='/challenging_dom']"))
             .click();
@@ -117,7 +124,7 @@ suite(
         // ----------------------------------------------------------------
         // minimize code by using a common function by passing driver and xpath parameters
         it("verify foo button functionality", async () => {
-          await delay(2000);
+          // await delay(2000);
           let fooLink = await driver.findElement(
             By.xpath("//div[@class='large-2 columns']/a[1]")
           );
@@ -131,7 +138,7 @@ suite(
           // console.warn(fooId, fooIdAfter);
         });
         it("verify bar/alert button functionality", async () => {
-          await delay(2000);
+          // await delay(2000);
           let fooLink = await driver.findElement(
             By.xpath("//div[@class='large-2 columns']/a[2]")
           );
@@ -145,7 +152,7 @@ suite(
           // console.warn(fooId, fooIdAfter);
         });
         it("verify qux/success button functionality", async () => {
-          await delay(2000);
+          // await delay(2000);
           let fooLink = await driver.findElement(
             By.xpath("//div[@class='large-2 columns']/a[3]")
           );
@@ -293,6 +300,250 @@ suite(
           for (const elem of tableColoumn2) {
             await verifyColoumn2(elem.xpath, elem.text);
           }
+        });
+        it("check edit button", async () => {
+          // await driver.navigate().back();
+          let urlBefore = await driver.getCurrentUrl();
+          await driver
+            .findElement(
+              By.xpath(
+                "//div[@class='large-10 columns']/table/tbody/tr[2]/td[7]/a[@href='#edit']"
+              )
+            )
+            .click();
+
+          let urlAfter = await driver.getCurrentUrl();
+          expect(urlBefore).to.not.equal(`${urlAfter}`);
+
+          // await delay(2000);
+        });
+        it("check delete button", async () => {
+          await driver.navigate().back();
+          let urlBefore = await driver.getCurrentUrl();
+          await driver
+            .findElement(
+              By.xpath(
+                "//div[@class='large-10 columns']/table/tbody/tr[2]/td[7]/a[@href='#delete']"
+              )
+            )
+            .click();
+
+          let urlAfter = await driver.getCurrentUrl();
+          expect(urlBefore).to.not.equal(`${urlAfter}`);
+
+          // await delay(2000);
+        });
+      });
+      describe("5. Checkboxes", async () => {
+        it("navigate to check box page", async () => {
+          // await delay(2000);
+          await driver.navigate().to("http://the-internet.herokuapp.com/");
+          await driver
+            .findElement(By.xpath("//ul/li/a[@href='/checkboxes']"))
+            .click();
+        });
+        it("verify header of checkbox page", async () => {
+          // await delay(2000);
+          let header = await driver.findElement(
+            By.xpath("//div[@id='content']/div/h3")
+          );
+          assert.equal(await header.getText(), `Checkboxes`);
+        });
+        it("verify checkboxes", async () => {
+          // await delay(2000);
+          let checkbox1 = await driver.findElement(
+            By.xpath("//div[@id='content']/div/form/input[1]")
+          );
+          await checkbox1.click();
+          delay(2000);
+          let checkbox2 = await driver.findElement(
+            By.xpath("//div[@id='content']/div/form/input[2]")
+          );
+          await checkbox2.click();
+          delay(2000);
+          await checkbox1.click();
+          delay(2000);
+          await checkbox2.click();
+          delay(2000);
+        });
+      });
+      describe("6. Context Menu", async () => {
+        it("navigation", async () => {
+          // await delay(2000);
+          await driver.navigate().back();
+          await driver
+            .findElement(By.xpath("//ul/li/a[@href='/context_menu']"))
+            .click();
+        });
+        it("verify header of Context Menu", async () => {
+          // await delay(2000);
+          let header = await driver.findElement(
+            By.xpath("//div[@id='content']/div/h3")
+          );
+          assert.equal(await header.getText(), `Context Menu`);
+        });
+        it("verify right click funtionality", async () => {
+          // Create an instance of Actions
+          // const actions = new Actions(driver);
+          let element = await driver.findElement(
+            By.xpath("//div[@id='content']/div/div")
+          );
+
+          // await actions.contextClick(element).perform();
+          await driver.actions().contextClick(element).perform();
+        });
+        it("verify Alert message", async () => {
+          const alert = await driver.switchTo().alert();
+          const alertMessage = await alert.getText();
+          console.log(alertMessage);
+          assert.equal(alertMessage, "You selected a context menu");
+        });
+        it("Accept alert", async () => {
+          const alert = await driver.switchTo().alert();
+          await alert.accept();
+        });
+      });
+      describe("7. Disappearing elements", async () => {
+        it("navigation", async () => {
+          // await delay(2000);
+          await driver.navigate().back();
+          await driver
+            .findElement(By.xpath("//ul/li/a[@href='/disappearing_elements']"))
+            .click();
+        });
+        it("check 404 pages", async () => {
+          // await delay(2000);
+          const notFoundPageDetection = async (e) => {
+            await delay(2000);
+            await driver
+              .findElement(By.xpath(`//div[@id='content']/div/ul/li[${e}]`))
+              .click();
+
+            const url = await driver.getCurrentUrl();
+            // assert(await axios.get(url), "404");
+
+            // Make an HTTP GET request
+            const protocol = http;
+            protocol.get(url, (response) => {
+              // Get the status code from the response
+              const statusCode = response.statusCode;
+
+              // console.log("Status code:", statusCode);
+              assert.equal(statusCode, "404");
+            });
+
+            await driver.navigate().back();
+          };
+
+          for (let i = 2; i < 5; i++) {
+            // console.log(i);
+            notFoundPageDetection(i);
+          }
+        });
+        // it("check contact Us page", async () => {
+        //   // await delay(2000);
+        //   await driver.navigate().back();
+        //   await driver
+        //     .findElement(By.xpath("//div[@id='content']/div/ul/li[3]"))
+        //     .click();
+
+        //   const url = await driver.getCurrentUrl();
+        //   // assert(await axios.get(url), "404");
+
+        //   // Make an HTTP GET request
+        //   const protocol = http;
+        //   protocol.get(url, (response) => {
+        //     // Get the status code from the response
+        //     const statusCode = response.statusCode;
+
+        //     console.log("Status code:", statusCode);
+        //     assert.equal(statusCode, "404");
+        //   });
+        // });
+        // it("check Portfolio page", async () => {
+        //   // await delay(2000);
+        //   await driver.navigate().back();
+        //   await driver
+        //     .findElement(By.xpath("//div[@id='content']/div/ul/li[4]"))
+        //     .click();
+
+        //   const url = await driver.getCurrentUrl();
+        //   // assert(await axios.get(url), "404");
+
+        //   // Make an HTTP GET request
+        //   const protocol = http;
+        //   protocol.get(url, (response) => {
+        //     // Get the status code from the response
+        //     const statusCode = response.statusCode;
+
+        //     console.log("Status code:", statusCode);
+        //     assert.equal(statusCode, "404");
+        //   });
+        // });
+        // it("check Gallery page", async () => {
+        //   // await delay(2000);
+        //   await driver.navigate().back();
+        //   await driver
+        //     .findElement(By.xpath("//div[@id='content']/div/ul/li[5]"))
+        //     .click();
+
+        //   const url = await driver.getCurrentUrl();
+        //   // assert(await axios.get(url), "404");
+
+        //   // Make an HTTP GET request
+        //   const protocol = http;
+        //   protocol.get(url, (response) => {
+        //     // Get the status code from the response
+        //     const statusCode = response.statusCode;
+
+        //     console.log("Status code:", statusCode);
+        //     assert.equal(statusCode, "404");
+        //   });
+        // });
+        it("check Home page navigation", async () => {
+          const element = await driver.wait(
+            until.elementLocated(
+              By.xpath("//div[@id='content']/div/ul/li[1]/a")
+            )
+          );
+
+          await element.click();
+          const url = await driver.getCurrentUrl();
+
+          // Make an HTTP GET request
+          http.get(url, (response) => {
+            // Get the status code from the response
+            const statusCode = response.statusCode;
+
+            // console.log("Status code:", statusCode);
+            assert.equal(statusCode, "200");
+          });
+        });
+      });
+      describe("8. Drag and drop", async () => {
+        it("navigation", async () => {
+          await driver
+            .findElement(By.xpath("//ul/li/a[@href='/drag_and_drop']"))
+            .click();
+        });
+        it("verify header of Drag and Drop", async () => {
+          // await delay(2000);
+          let header = await driver.findElement(
+            By.xpath("//div[@id='content']/div/h3")
+          );
+          assert.equal(await header.getText(), `Drag and Drop`);
+        });
+        it("drag and drop element a to b", async () => {
+          await delay(2000);
+          let draggable = await driver.findElement(
+            By.xpath("//div[@id='content']/div/div/div[@id='column-a']")
+          );
+          let dropable = await driver.findElement(
+            By.xpath("//div[@id='content']/div/div/div[@id='column-b']")
+          );
+          // const actions = driver.actions({ async: true });
+          // await actions.dragAndDrop(draggable, dropable).perform();
+          await driver.actions().dragAndDrop(draggable, dropable).perform();
         });
       });
     });
