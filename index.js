@@ -5,6 +5,7 @@ const chai = require("chai");
 const http = require("http");
 const chaiAsPromised = require("chai-as-promised");
 const { default: axios } = require("axios");
+const { Select } = require("selenium-webdriver");
 
 // chai.use(chaiAsPromised);
 // const expect = chai.expect;
@@ -523,27 +524,45 @@ suite(
       describe("8. Drag and drop", async () => {
         it("navigation", async () => {
           await driver
-            .findElement(By.xpath("//ul/li/a[@href='/drag_and_drop']"))
-            .click();
+            .navigate()
+            .to("https://www.selenium.dev/selenium/web/mouse_interaction.html");
         });
-        it("verify header of Drag and Drop", async () => {
-          // await delay(2000);
-          let header = await driver.findElement(
-            By.xpath("//div[@id='content']/div/h3")
-          );
-          assert.equal(await header.getText(), `Drag and Drop`);
-        });
+        // it("verify header of Drag and Drop", async () => {
+        //   // await delay(2000);
+        //   let header = await driver.findElement(
+        //     By.xpath("//div[@id='content']/div/h3")
+        //   );
+        //   assert.equal(await header.getText(), `Drag and Drop`);
+        // });
         it("drag and drop element a to b", async () => {
           await delay(2000);
-          let draggable = await driver.findElement(
-            By.xpath("//div[@id='content']/div/div/div[@id='column-a']")
-          );
-          let dropable = await driver.findElement(
-            By.xpath("//div[@id='content']/div/div/div[@id='column-b']")
-          );
-          // const actions = driver.actions({ async: true });
-          // await actions.dragAndDrop(draggable, dropable).perform();
-          await driver.actions().dragAndDrop(draggable, dropable).perform();
+          // html5 drag able not supported in selenium
+          let draggable = await driver.findElement(By.id("draggable"));
+          let dropable = await driver.findElement(By.id("droppable"));
+
+          const actions = driver.actions({ async: true });
+          await actions.dragAndDrop(draggable, dropable).perform();
+        });
+      });
+      describe("9. Drop Down List", async () => {
+        it("verify drop down menu", async () => {
+          await driver.navigate().to("http://the-internet.herokuapp.com/");
+          await driver.findElement(By.xpath("//a[@href='/dropdown']")).click();
+
+          let elem = await driver.findElement(By.xpath("//select"));
+          await delay(500);
+          // await driver.findElement(By.xpath("//option[2]")).click();
+
+          // Create a new Select instance
+          const dropdown = new Select(elem);
+          // Select an option by visible text
+          await dropdown.selectByVisibleText("Option 1");
+          // Select an option by visible text
+          await delay(500);
+          await dropdown.selectByVisibleText("Option 2");
+          // Select an option by visible text
+          await delay(500);
+          await dropdown.selectByVisibleText("Option 1");
         });
       });
     });
