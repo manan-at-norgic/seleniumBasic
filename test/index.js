@@ -6,6 +6,7 @@ const http = require("http");
 const chaiAsPromised = require("chai-as-promised");
 const { default: axios } = require("axios");
 const { Select } = require("selenium-webdriver");
+const { del } = require("selenium-webdriver/http");
 
 // chai.use(chaiAsPromised);
 // const expect = chai.expect;
@@ -17,9 +18,10 @@ suite(
     describe("Test suite", async () => {
       before(async function () {
         driver = await new Builder().forBrowser("chrome").build();
+        await driver.manage().window().maximize();
       });
       after(async () => {
-        await delay(5000);
+        await delay(2000);
         await driver.quit();
       });
       describe("1. add remove elements", async () => {
@@ -63,7 +65,7 @@ suite(
           // Navigate to the webpage
           // await delay(2000);
           await driver.navigate().back();
-          await delay(3000);
+          // await delay(3000);
           await driver
             .findElement(By.xpath("//ul/li/a[@href='/broken_images']"))
             .click();
@@ -82,18 +84,24 @@ suite(
 
             // Assert that the image is loaded successfully
             // expect(isLoaded, `Broken image detected: ${src}`).to.be.true;
-            if (isLoaded) {
-              okImg++;
-            } else {
-              broken++;
+            {
+              isLoaded ? okImg++ : broken++;
             }
+            // if (isLoaded) {
+            //   console.log(isLoaded, "isloaded successfully");
+            //   okImg++;
+            // } else {
+            //   broken++;
+            // }
             // console.log(`// ${isLoaded}`);
           }
 
-          console.log(
-            broken,
-            `Broken image detected and ok Img count is ${okImg} and total image cont is ${totaleImages}`
-          );
+          assert.equal(broken, 2);
+
+          // console.log(
+          //   broken,
+          //   `Broken image detected and ok Img count is ${okImg} and total image cont is ${totaleImages}`
+          // );
         });
       });
 
@@ -415,7 +423,7 @@ suite(
         it("check 404 pages", async () => {
           // await delay(2000);
           const notFoundPageDetection = async (e) => {
-            await delay(2000);
+            // await delay(2000);
             await driver
               .findElement(By.xpath(`//div[@id='content']/div/ul/li[${e}]`))
               .click();
@@ -438,7 +446,7 @@ suite(
 
           for (let i = 2; i < 5; i++) {
             // console.log(i);
-            notFoundPageDetection(i);
+            await notFoundPageDetection(i);
           }
         });
         // it("check contact Us page", async () => {
@@ -535,12 +543,12 @@ suite(
         //   assert.equal(await header.getText(), `Drag and Drop`);
         // });
         it("drag and drop element a to b", async () => {
-          await delay(2000);
+          // await delay(2000);
           // html5 drag able not supported in selenium
           let draggable = await driver.findElement(By.id("draggable"));
           let dropable = await driver.findElement(By.id("droppable"));
 
-          const actions = driver.actions({ async: true });
+          const actions = await driver.actions({ async: true });
           await actions.dragAndDrop(draggable, dropable).perform();
         });
       });
@@ -550,19 +558,74 @@ suite(
           await driver.findElement(By.xpath("//a[@href='/dropdown']")).click();
 
           let elem = await driver.findElement(By.xpath("//select"));
-          await delay(500);
+          // await delay(500);
           // await driver.findElement(By.xpath("//option[2]")).click();
 
           // Create a new Select instance
           const dropdown = new Select(elem);
-          // Select an option by visible text
-          await dropdown.selectByVisibleText("Option 1");
-          // Select an option by visible text
-          await delay(500);
-          await dropdown.selectByVisibleText("Option 2");
-          // Select an option by visible text
-          await delay(500);
-          await dropdown.selectByVisibleText("Option 1");
+          let data = ["Option 1", "Option 2"];
+          let selectOption = async (option) => {
+            // Select an option by visible text
+            await dropdown.selectByVisibleText(`${option}`);
+            // await delay(500);
+          };
+
+          for (let i = 0; i < 3; i++) {
+            for (const element of data) {
+              await selectOption(element);
+            }
+          }
+        });
+      });
+      describe("10. Dynamic content", async () => {
+        it("navigation", async () => {
+          // await delay(2000);
+          await driver.navigate().back();
+          await driver
+            .findElement(By.xpath("//a[@href='/dynamic_content']"))
+            .click();
+        });
+        it("dynamic content verification", async () => {
+          let imgSource = [];
+          let data2 = [];
+          const storeDynamicData = async (imgPath) => {
+            let imgs = await driver.findElements(By.xpath(imgPath));
+            let arr = [];
+            for (let i = 0; i < imgs.length; i++) {
+              let img = imgs[i];
+              arr.push({ [i]: await img.getAttribute("src") });
+            }
+            imgSource.push(arr);
+
+            arr = [];
+          };
+          const verifyDynamicContent = async (arrayOfObjects) => {
+            for (let i = 0; i < arrayOfObjects[0].length; i++) {
+              let arr1 = arrayOfObjects[0];
+              let arr2 = arrayOfObjects[1];
+              assert.equal(arr1.length, arr2.length);
+              if (arr1.length === arr2.length) {
+                if (arr1[i][i] === arr2[i][i]) {
+                  console.log(true);
+                } else {
+                  console.log(false);
+                }
+              }
+            }
+          };
+
+          // 1st iteration to store images src
+          await storeDynamicData("//div[@class='example']/div/div/div/div/img");
+          await driver.navigate().refresh();
+
+          // 2nd iteration to store images src
+          await storeDynamicData("//div[@class='example']/div/div/div/div/img");
+
+          // console.log(
+          //   JSON.stringify(imgSource),
+          //   "2 sub arrays with 3 image src objects"
+          // );
+          await verifyDynamicContent(imgSource);
         });
       });
     });
