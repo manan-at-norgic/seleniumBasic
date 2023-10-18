@@ -3,6 +3,7 @@
     "start": "mocha test.spec.js",
     "test": "npx mocha --timeout 100000 index.js",
     "auto": "nodemon --exec \"mocha test/index.js --timeout 100000 \"",
+    "vuAccount": "mocha --timeout 100000 vuTest.js",
     "report": "mocha test/index.js --timeout 100000 --reporter mochawesome"
   },
   "dependencies": {
